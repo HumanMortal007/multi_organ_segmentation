@@ -1,0 +1,14 @@
+venv/
+__pycache__/
+*.pyc
+.idea/
+.vscode/
+data/
+experiments/
+inference_results/
+checkpoints/
+results/
+TransUNet/
+*.npz
+*.nii.gz
+*.pth

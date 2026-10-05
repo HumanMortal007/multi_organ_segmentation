@@ -1,0 +1,91 @@
+# ============================================================
+# 2D TransUNet Multi-Organ Segmentation - Configuration
+# ============================================================
+
+# Dataset
+dataset:
+  name: Synapse
+  train_data_dir: data/Synapse/train_npz
+  test_data_dir: data/Synapse/test_vol_h5
+  list_dir: TransUNet/lists/lists_Synapse
+  num_classes: 9
+  img_size: 224
+  class_names:
+    - background
+    - aorta
+    - gallbladder
+    - spleen
+    - left_kidney
+    - right_kidney
+    - liver
+    - stomach
+    - pancreas
+
+# Model (TransUNet)
+model:
+  name: transunet
+  in_channels: 1
+  num_classes: 9
+  img_size: 224
+  patch_size: 16
+  hidden_dim: 256         # Transformer hidden dimension (lightweight for 8GB VRAM)
+  num_layers: 6           # Number of transformer layers
+  num_heads: 8            # Number of attention heads
+  mlp_dim: 1024           # Transformer MLP dimension
+  dropout: 0.1
+  cnn_channels: [32, 64, 128, 256] # CNN feature extractor channels
+  bilinear: true          # Use bilinear upsampling in decoder to save VRAM
+
+# Training
+training:
+  seed: 1234
+  num_epochs: 20
+  batch_size: 8           # Increased from 4 - VRAM peak was only 0.5GB at batch=4
+  num_workers: 0          # Set to 0 on Windows to prevent multiprocessing issues, else 2
+  pin_memory: true
+  persistent_workers: false
+
+# Optimizer
+optimizer:
+  name: adamw
+  lr: 1.0e-4              # Lower learning rate for Transformer training
+  weight_decay: 1.0e-4
+
+# Scheduler
+scheduler:
+  name: cosine
+  T_max: 20
+  eta_min: 1.0e-6
+
+# Loss (CE + Dice, exactly matching Base U-Net)
+loss:
+  ce_weight: 0.5
+  dice_weight: 0.5
+
+# Augmentation (exactly matching Base U-Net)
+augmentation:
+  enabled: true
+  random_rot_flip: true
+  random_rotate: true
+
+# AMP
+amp:
+  enabled: true
+
+# Checkpointing
+checkpointing:
+  dir: experiments/transunet/checkpoints
+  save_best: true
+  save_last: true
+
+# Results
+results:
+  dir: experiments/transunet/results
+  plots_dir: experiments/transunet/plots
+  vis_dir: experiments/transunet/visualizations
+  logs_dir: experiments/transunet/logs
+
+# Evaluation
+evaluation:
+  patch_size: 224
+  z_spacing: 1

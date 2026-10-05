@@ -1,0 +1,84 @@
+# ============================================================
+# 2D U-Net Multi-Organ Segmentation - Configuration
+# ============================================================
+
+# Dataset
+dataset:
+  name: Synapse
+  train_data_dir: data/Synapse/train_npz
+  test_data_dir: data/Synapse/test_vol_h5
+  list_dir: TransUNet/lists/lists_Synapse
+  num_classes: 9
+  img_size: 224
+  class_names:
+    - background
+    - aorta
+    - gallbladder
+    - spleen
+    - left_kidney
+    - right_kidney
+    - liver
+    - stomach
+    - pancreas
+
+# Model
+model:
+  name: unet2d
+  in_channels: 1
+  num_classes: 9
+  base_channels: 32     # Lightweight: 32->64->128->256->512
+  bilinear: true        # Bilinear upsampling saves VRAM
+
+# Training
+training:
+  seed: 1234
+  num_epochs: 20
+  batch_size: 8
+  num_workers: 4
+  pin_memory: true
+  persistent_workers: true
+
+# Optimizer
+optimizer:
+  name: adamw
+  lr: 3.0e-4
+  weight_decay: 1.0e-5
+
+# Scheduler
+scheduler:
+  name: cosine
+  T_max: 20             # Match num_epochs
+  eta_min: 1.0e-6
+
+# Loss (CE + Dice, matching TransUNet)
+loss:
+  ce_weight: 0.5
+  dice_weight: 0.5
+
+# Augmentation (matching TransUNet)
+augmentation:
+  enabled: true
+  random_rot_flip: true   # 90-degree rotations + flip
+  random_rotate: true     # small rotations -20 to 20 deg
+
+# AMP
+amp:
+  enabled: true           # Recommended for RTX 4060
+
+# Checkpointing
+checkpointing:
+  dir: experiments/base_unet/checkpoints
+  save_best: true
+  save_last: true
+
+# Results
+results:
+  dir: experiments/base_unet/results
+  plots_dir: experiments/base_unet/plots
+  vis_dir: experiments/base_unet/visualizations
+  logs_dir: experiments/base_unet/logs
+
+# Evaluation
+evaluation:
+  patch_size: 224         # Resize slices to 224x224 for inference
+  z_spacing: 1
