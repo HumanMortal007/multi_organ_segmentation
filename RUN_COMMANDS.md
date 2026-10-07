@@ -75,17 +75,33 @@ python tests/test_unet_2_5d.py
 python tests/test_overfit_2_5d.py
 ```
 
-## 6. Standalone Evaluation
+## 6. Standalone Evaluation (Unified — All 3 Models)
 
-If you want to re-evaluate a trained model (the evaluation automatically runs at the end of training, but you can run it manually):
+Use the new unified `scripts/evaluate.py` to evaluate any trained model **without retraining**.
+It calculates both **Macro Mean Dice** (existing) and the new **Weighted Mean Dice**, plus per-organ HD95.
+Results are saved as `summary.txt`, `metrics.json`, and `metrics.csv` under `experiments/<model>/results/evaluation/<timestamp>/`.
 
 ```bash
-# Evaluate TransUNet
-python scripts/evaluate_transunet.py --checkpoint experiments/transunet/checkpoints/best_model.pth
+# Evaluate 2D Base U-Net
+venv/Scripts/python.exe scripts/evaluate.py --model unet --checkpoint experiments/base_unet/checkpoints/best_model.pth
 
-# Evaluate Base U-Net
-python scripts/evaluate_unet.py --checkpoint experiments/base_unet/checkpoints/best_model.pth
+# Evaluate 2D TransUNet
+venv/Scripts/python.exe scripts/evaluate.py --model transunet --checkpoint experiments/transunet/checkpoints/best_model.pth
+
+# Evaluate 2.5D U-Net
+venv/Scripts/python.exe scripts/evaluate.py --model unet_2_5d --checkpoint experiments/unet_2_5d/checkpoints/best_model.pth
+
+# Evaluate with visualizations (saves CT / GT / Pred / Overlay panels)
+# --save_vis       : enable visualization output
+# --n_vis 5        : how many test volumes to visualize
+# --foreground_slices : pick the slice with the most organ pixels (better visuals)
+venv/Scripts/python.exe scripts/evaluate.py --model transunet --checkpoint experiments/transunet/checkpoints/best_model.pth --save_vis --n_vis 5 --foreground_slices
 ```
+
+> **How many times does it run?**
+> Each command runs the evaluation **exactly once** on all **12 test volumes**.
+> You can run the same command as many times as you want — it **never retrains** the model.
+> Each run saves results to a **new timestamped folder** so previous results are never overwritten.
 
 ## 6. Random Inference & Segmentation (Demo)
 
