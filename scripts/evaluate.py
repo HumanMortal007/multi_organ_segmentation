@@ -1,13 +1,14 @@
 """
 scripts/evaluate.py
 ===================
-Unified standalone evaluation script for all three trained models.
+Unified standalone evaluation script for all four trained models.
 Loads a saved .pth checkpoint and runs inference — NO retraining.
 
 Supports:
-  --model unet        (2D Base U-Net)
-  --model transunet   (2D TransUNet)
-  --model unet_2_5d   (2.5D U-Net)
+  --model unet            (2D Base U-Net)
+  --model transunet       (2D TransUNet)
+  --model unet_2_5d       (2.5D U-Net)
+  --model transunet_2_5d  (2.5D TransUNet)
 
 Calculates:
   1. Macro Mean Dice (existing, unchanged formula)
@@ -21,9 +22,10 @@ Saves:
   - experiments/<model>/results/evaluation/<timestamp>/summary.txt
 
 Usage (from project root with venv activated):
-  venv/Scripts/python.exe scripts/evaluate.py --model unet       --checkpoint experiments/base_unet/checkpoints/best_model.pth
-  venv/Scripts/python.exe scripts/evaluate.py --model transunet  --checkpoint experiments/transunet/checkpoints/best_model.pth
-  venv/Scripts/python.exe scripts/evaluate.py --model unet_2_5d --checkpoint experiments/unet_2_5d/checkpoints/best_model.pth
+  venv/Scripts/python.exe scripts/evaluate.py --model unet            --checkpoint experiments/base_unet/checkpoints/best_model.pth
+  venv/Scripts/python.exe scripts/evaluate.py --model transunet       --checkpoint experiments/transunet/checkpoints/best_model.pth
+  venv/Scripts/python.exe scripts/evaluate.py --model unet_2_5d      --checkpoint experiments/unet_2_5d/checkpoints/best_model.pth
+  venv/Scripts/python.exe scripts/evaluate.py --model transunet_2_5d --checkpoint experiments/transunet_2_5d/checkpoints/best_model.pth
 
 Optional flags:
   --save_vis          Save CT / GT / Pred / Overlay panels for N cases
@@ -85,6 +87,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from datasets.synapse_dataset import get_test_loader
 from models.transunet import build_transunet
+from models.transunet_2_5d import build_transunet_2_5d
 from models.unet2d import build_unet2d
 from models.unet_2_5d import build_unet_2_5d
 from utils.metrics import test_single_volume
@@ -100,7 +103,7 @@ def parse_args():
         description="Evaluate a trained segmentation model without retraining."
     )
     p.add_argument("--model", type=str, required=True,
-                   choices=["unet", "transunet", "unet_2_5d"],
+                   choices=["unet", "transunet", "unet_2_5d", "transunet_2_5d"],
                    help="Model architecture to evaluate.")
     p.add_argument("--checkpoint", type=str, required=True,
                    help="Path to the saved .pth checkpoint file.")
@@ -120,9 +123,10 @@ def parse_args():
 # ──────────────────────────────────────────────────────────────────────────────
 
 _DEFAULT_CONFIGS = {
-    "unet":      "configs/unet2d_config.yaml",
-    "transunet": "configs/transunet.yaml",
-    "unet_2_5d": "configs/unet_2_5d_config.yaml",
+    "unet":            "configs/unet2d_config.yaml",
+    "transunet":       "configs/transunet.yaml",
+    "unet_2_5d":      "configs/unet_2_5d_config.yaml",
+    "transunet_2_5d": "configs/transunet_2_5d_config.yaml",
 }
 
 
@@ -147,6 +151,8 @@ def build_model(model_name, cfg, device):
         return build_transunet(cfg).to(device)
     elif model_name == "unet_2_5d":
         return build_unet_2_5d(cfg).to(device)
+    elif model_name == "transunet_2_5d":
+        return build_transunet_2_5d(cfg).to(device)
     raise ValueError(f"Unknown model: {model_name}")
 
 
@@ -362,7 +368,7 @@ def main():
     patch_size  = cfg["evaluation"]["patch_size"]
     eval_cfg    = cfg["evaluation"]
     vis_dir     = cfg["results"]["vis_dir"]
-    is_2_5d     = (args.model == "unet_2_5d")
+    is_2_5d     = (args.model in ("unet_2_5d", "transunet_2_5d"))
 
     print(f"\n[Evaluation] {args.model}  |  {len(test_dataset)} test volumes")
     print("=" * 66)

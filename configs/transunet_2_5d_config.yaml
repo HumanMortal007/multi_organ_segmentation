@@ -1,0 +1,96 @@
+# ============================================================
+# 2.5D TransUNet Multi-Organ Segmentation - Configuration
+# ============================================================
+# Mirrors 2D TransUNet (configs/transunet.yaml) exactly.
+# ONLY change: in_channels = 3 (feeds z-1, z, z+1 as 3 channels).
+# batch_size stays at 8 — matches TransUNet for fair comparison.
+# ============================================================
+
+# Dataset
+dataset:
+  name: Synapse
+  train_data_dir: data/Synapse/train_npz
+  test_data_dir: data/Synapse/test_vol_h5
+  list_dir: TransUNet/lists/lists_Synapse
+  num_classes: 9
+  img_size: 224
+  class_names:
+    - background
+    - aorta
+    - gallbladder
+    - spleen
+    - left_kidney
+    - right_kidney
+    - liver
+    - stomach
+    - pancreas
+
+# Model (2.5D TransUNet — same architecture as 2D TransUNet, in_channels=3)
+model:
+  name: transunet_2_5d
+  in_channels: 3           # 2.5D: z-1, z, z+1 stacked as 3 channels
+  num_classes: 9
+  img_size: 224
+  patch_size: 16
+  hidden_dim: 256          # Identical to 2D TransUNet
+  num_layers: 6            # Identical to 2D TransUNet
+  num_heads: 8             # Identical to 2D TransUNet
+  mlp_dim: 1024            # Identical to 2D TransUNet
+  dropout: 0.1
+  cnn_channels: [32, 64, 128, 256]  # Identical to 2D TransUNet
+  bilinear: true           # Bilinear upsampling saves VRAM
+
+# Training
+training:
+  seed: 1234
+  num_epochs: 20
+  batch_size: 8            # Same as 2D TransUNet — fair comparison
+  num_workers: 0           # 0 on Windows to prevent multiprocessing issues
+  pin_memory: true
+  persistent_workers: false
+
+# Optimizer (identical to 2D TransUNet)
+optimizer:
+  name: adamw
+  lr: 1.0e-4
+  weight_decay: 1.0e-4
+
+# Scheduler (identical to 2D TransUNet)
+scheduler:
+  name: cosine
+  T_max: 20
+  eta_min: 1.0e-6
+
+# Loss (identical to all existing models)
+loss:
+  ce_weight: 0.5
+  dice_weight: 0.5
+
+# Augmentation (identical to all existing models)
+augmentation:
+  enabled: true
+  random_rot_flip: true
+  random_rotate: true
+
+# AMP
+amp:
+  enabled: true
+
+# Checkpointing
+checkpointing:
+  dir: experiments/transunet_2_5d/checkpoints
+  save_best: true
+  save_last: true
+
+# Results
+results:
+  dir: experiments/transunet_2_5d/results
+  plots_dir: experiments/transunet_2_5d/plots
+  vis_dir: experiments/transunet_2_5d/visualizations
+  logs_dir: experiments/transunet_2_5d/logs
+
+# Evaluation
+evaluation:
+  patch_size: 224
+  z_spacing: 1
+
